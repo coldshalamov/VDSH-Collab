@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Business Onboarding — VS Digital Health</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Variables ───────────────────────────── */
+    :root {
+      --bg: #FAF9F6;
+      --bg-grad: linear-gradient(160deg, #FAF9F6 0%, #F3F0EB 100%);
+      --surface: #FFFFFF;
+      --border: #E5E2DC;
+      --border-lt: #F0EDE8;
+      --primary: #1B4D3E;
+      --primary-h: #153D31;
+      --primary-bg: #EAF2EF;
+      --accent: #D4952A;
+      --text: #1A1A17;
+      --text-2: #6B6B63;
+      --text-3: #9C9C93;
+      --err: #C53030;
+      --err-bg: #FFF5F5;
+      --ok: #276749;
+      --ok-bg: #F0FFF4;
+      --r: 16px;
+      --rs: 8px;
+      --shadow: 0 1px 3px rgba(26,26,23,.06), 0 2px 8px rgba(26,26,23,.04);
+      --font-d: 'Instrument Serif', Georgia, serif;
+      --font-b: 'Outfit', system-ui, sans-serif;
+      --ease: cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Reset ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body {
+      font-family: var(--font-b);
+      background: var(--bg-grad);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Grain Overlay ───────────────────────── */
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      opacity: 0.022;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") repeat;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    .header {
+      text-align: center;
+      padding: 48px 24px 0;
+    }
+    .header h1 {
+      font-family: var(--font-d);
+      font-size: clamp(28px, 5vw, 36px);
+      font-weight: 400;
+      color: var(--primary);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .header .tag {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* ── Layout ──────────────────────────────── */
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px 40px; }
+
+    /* ── Stepper ─────────────────────────────── */
+    .stepper {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 36px 0 28px;
+      gap: 0;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    .step-circle {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+      border: 2px solid var(--border);
+      color: var(--text-3);
+      background: var(--surface);
+      transition: all 0.35s var(--ease);
+    }
+    .step-item.active .step-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(27,77,62,.12);
+    }
+    .step-item.done .step-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+    .step-label {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-3);
+      margin-top: 8px;
+      transition: color 0.3s;
+    }
+    .step-item.active .step-label,
+    .step-item.done .step-label { color: var(--primary); }
+    .step-conn {
+      width: 72px; height: 2px;
+      background: var(--border);
+      margin: 18px -2px 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 1px;
+    }
+    .step-conn-fill {
+      position: absolute; inset: 0;
+      background: var(--primary);
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 0.45s var(--ease);
+    }
+    .step-conn.filled .step-conn-fill { transform: scaleX(1); }
+
+    /* ── Card ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 36px;
+      border: 1px solid var(--border-lt);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Section Titles ──────────────────────── */
+    .sec-title {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .sec-desc {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 24px;
+    }
+    .sub-title {
+      font-family: var(--font-d);
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .divider {
+      height: 1px;
+      background: var(--border-lt);
+      margin: 28px 0;
+    }
+
+    /* ── Form Elements ───────────────────────── */
+    .fg { margin-bottom: 20px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fg label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+    }
+    .fg .req { color: var(--err); margin-left: 2px; }
+    .fg input, .fg select, .fg textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--rs);
+      font-size: 15px;
+      font-family: var(--font-b);
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      appearance: none;
+    }
+    .fg select {
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%239C9C93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    .fg textarea { resize: vertical; min-height: 60px; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(27,77,62,.08);
+    }
+    .fg input.has-error, .fg select.has-error {
+      border-color: var(--err);
+      box-shadow: 0 0 0 3px rgba(197,48,48,.07);
+    }
+    .fg .err-msg {
+      font-size: 13px; color: var(--err);
+      margin-top: 5px;
+      display: none;
+      animation: errIn 0.2s ease;
+    }
+    .fg .err-msg.show { display: block; }
+    .fg .help {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+    .chk {
+      display: inline-flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chk input {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+    }
+    .chk span { font-size: 13px; font-weight: 600; color: var(--text-2); }
+    .fg select[multiple] { min-height: 120px; padding: 10px 12px; }
+    #loc-address-fields.is-locked { opacity: 0.78; }
+
+    /* ── Form Rows ───────────────────────────── */
+    .row { display: grid; gap: 16px; }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: 2fr 1fr 1fr; }
+
+    /* ── Step Panels ─────────────────────────── */
+    .step-panel { display: none; }
+    .step-panel.on { display: block; }
+
+    /* ── Buttons ─────────────────────────────── */
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 28px;
+      border-radius: var(--rs);
+      font-family: var(--font-b);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: all 0.2s var(--ease);
+      text-decoration: none;
+    }
+    .btn-p {
+      background: var(--primary); color: #fff;
+    }
+    .btn-p:hover:not(:disabled) {
+      background: var(--primary-h);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(27,77,62,.22);
+    }
+    .btn-p:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-g {
+      background: transparent; color: var(--text-2);
+      border: 1.5px solid var(--border);
+    }
+    .btn-g:hover { border-color: var(--text-2); color: var(--text); }
+    .btn-arrow { font-size: 18px; line-height: 1; }
+    .btn-spin {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    /* ── Review ──────────────────────────────── */
+    .rev-sec { padding: 20px 0; border-bottom: 1px solid var(--border-lt); }
+    .rev-sec:last-child { border-bottom: none; }
+    .rev-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .rev-head h3 { font-family: var(--font-d); font-size: 18px; font-weight: 400; }
+    .rev-edit {
+      font-size: 13px; color: var(--primary); cursor: pointer;
+      font-weight: 500; background: none; border: none;
+      font-family: var(--font-b);
+    }
+    .rev-edit:hover { text-decoration: underline; }
+    .rev-row { display: flex; padding: 3px 0; font-size: 14px; }
+    .rev-lbl { width: 140px; flex-shrink: 0; color: var(--text-3); }
+    .rev-val { color: var(--text); font-weight: 500; }
+
+    /* ── States ──────────────────────────────── */
+    .state { transition: opacity 0.3s var(--ease); }
+    .state[hidden] { display: none !important; }
+    .state.fading { opacity: 0; }
+
+    .state-center {
+      text-align: center;
+      padding: 60px 0;
+    }
+
+    /* Loading */
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 20px;
+    }
+    .state-center p { color: var(--text-2); font-size: 15px; }
+
+    /* Invalid */
+    .state-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+    .state-center h2 {
+      font-family: var(--font-d);
+      font-size: 24px; font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    /* Success */
+    .check-svg { width: 80px; height: 80px; margin: 0 auto 24px; display: block; }
+    .check-ring {
+      stroke: var(--ok); stroke-width: 2; fill: none;
+      stroke-dasharray: 166; stroke-dashoffset: 166;
+      animation: draw 0.6s cubic-bezier(.65,0,.45,1) forwards;
+    }
+    .check-mark {
+      stroke: var(--ok); stroke-width: 3; fill: none;
+      stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 48; stroke-dashoffset: 48;
+      animation: draw 0.3s cubic-bezier(.65,0,.45,1) 0.5s forwards;
+    }
+    .success-sub { color: var(--text-2); font-size: 15px; max-width: 400px; margin: 0 auto; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--err); color: #fff;
+      padding: 14px 24px; border-radius: var(--rs);
+      font-size: 14px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      z-index: 10000; max-width: 460px; text-align: center;
+      animation: toastIn 0.3s ease;
+    }
+    @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(12px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+    /* Config error */
+    .cfg-box {
+      background: var(--err-bg); border: 1px solid #FED7D7;
+      border-radius: var(--rs); padding: 16px 20px;
+      font-size: 14px; color: var(--err);
+      margin-top: 16px; text-align: left;
+    }
+    .cfg-box code {
+      background: rgba(197,48,48,.08); padding: 2px 6px;
+      border-radius: 4px; font-size: 13px;
+    }
+
+    /* ── Footer ──────────────────────────────── */
+    .footer {
+      text-align: center; padding: 24px 0;
+      font-size: 12px; color: var(--text-3);
+    }
+
+    /* ── Animations ──────────────────────────── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInR { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideOutL { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-30px); } }
+    @keyframes slideInL { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideOutR { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(30px); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    @keyframes errIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .anim-fade { animation: fadeIn 0.5s ease both; }
+    .anim-up { animation: slideUp 0.5s ease both; }
+    .anim-up-d1 { animation: slideUp 0.5s ease 0.1s both; }
+    .anim-up-d2 { animation: slideUp 0.5s ease 0.2s both; }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 520px) {
+      .card { padding: 24px 20px; }
+      .row-2, .row-3 { grid-template-columns: 1fr; }
+      .step-conn { width: 36px; }
+      .step-label { font-size: 11px; }
+      .nav { flex-wrap: wrap; gap: 12px; }
+      .nav .btn { flex: 1; min-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="header anim-fade">
+    <h1>Business Onboarding</h1>
+    <span class="tag">VS Digital Health Platform</span>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ── Loading State ──────────────────── -->
+    <div id="state-loading" class="state">
+      <div class="card anim-up-d1">
+        <div class="state-center">
+          <div class="spinner"></div>
+          <p>Verifying your invitation&hellip;</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Invalid State ──────────────────── -->
+    <div id="state-invalid" class="state" hidden>
+      <div class="card anim-up">
+        <div class="state-center">
+          <span class="state-icon" id="inv-icon">&#128274;</span>
+          <h2 id="inv-title">Invalid Link</h2>
+          <p id="inv-desc">Please check your email for the correct link.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Config Error ───────────────────── -->
+    <div id="state-config" class="state" hidden>
+      <div class="card anim-up">
+        <div class="state-center">
+          <span class="state-icon">&#9881;</span>
+          <h2>Setup Required</h2>
+          <p>The Google Apps Script endpoint hasn't been configured yet.</p>
+          <div class="cfg-box">
+            Open this file and set <code>SCRIPT_URL</code> to your deployed Google Apps Script URL.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Form State ─────────────────────── -->
+    <div id="state-form" class="state" hidden>
+
+      <!-- Stepper -->
+      <div class="stepper anim-up-d1">
+        <div class="step-item active" data-si="0">
+          <div class="step-circle">1</div>
+          <div class="step-label">Basics</div>
+        </div>
+        <div class="step-conn" data-sc="0"><div class="step-conn-fill"></div></div>
+        <div class="step-item" data-si="1">
+          <div class="step-circle">2</div>
+          <div class="step-label">Address</div>
+        </div>
+        <div class="step-conn" data-sc="1"><div class="step-conn-fill"></div></div>
+        <div class="step-item" data-si="2">
+          <div class="step-circle">3</div>
+          <div class="step-label">Location</div>
+        </div>
+        <div class="step-conn" data-sc="2"><div class="step-conn-fill"></div></div>
+        <div class="step-item" data-si="3">
+          <div class="step-circle">4</div>
+          <div class="step-label">Review</div>
+        </div>
+      </div>
+
+      <form id="onboard-form" autocomplete="on" novalidate>
+        <div class="card anim-up-d2">
+
+          <!-- ── Step 0: Business ─────────── -->
+          <div class="step-panel on" data-step="0">
+            <h2 class="sec-title">Organization &amp; Business</h2>
+            <p class="sec-desc">Basic details used to set up your import configuration</p>
+
+            <div class="fg">
+              <label>Organization Name <span class="req">*</span></label>
+              <input type="text" name="organization_name" autocomplete="organization" required>
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="fg">
+              <label>Business Name <span class="req">*</span></label>
+              <input type="text" name="business_name" autocomplete="organization" required>
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="fg">
+              <label>Description</label>
+              <textarea name="business_description" rows="3" placeholder="Short description (optional)"></textarea>
+            </div>
+
+            <div class="fg">
+              <label>Business Phone <span class="req">*</span></label>
+              <input type="tel" name="business_phone" data-phone-e164 placeholder="+18887776543" autocomplete="tel">
+              <span class="help" data-phone-help></span>
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="fg">
+              <label>Tagline</label>
+              <input type="text" name="business_tagline" placeholder="Optional tagline">
+            </div>
+
+            <div class="fg">
+              <label class="chk">
+                <input type="checkbox" name="business_do_not_display_on_header" value="true">
+                <span>Do not display on the header</span>
+              </label>
+              <span class="help">Defaults to <strong>False</strong> (unchecked).</span>
+            </div>
+          </div>
+
+          <!-- ── Step 1: Details ──────────── -->
+          <div class="step-panel" data-step="1">
+            <h2 class="sec-title">Business Address &amp; Fees</h2>
+            <p class="sec-desc">These values should match your contract terms</p>
+
+            <div class="fg">
+              <label>Address Line 1 <span class="req">*</span></label>
+              <input type="text" name="business_address_line1" autocomplete="address-line1" placeholder="123 Main Street">
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="fg">
+              <label>Address Line 2</label>
+              <input type="text" name="business_address_line2" autocomplete="address-line2" placeholder="Suite 100">
+            </div>
+
+            <div class="row row-3">
+              <div class="fg">
+                <label>City <span class="req">*</span></label>
+                <input type="text" name="business_city" autocomplete="address-level2">
+                <span class="err-msg"></span>
+              </div>
+              <div class="fg">
+                <label>State <span class="req">*</span></label>
+                <select name="business_state" data-states autocomplete="address-level1">
+                  <option value="">Select&hellip;</option>
+                </select>
+                <span class="err-msg"></span>
+              </div>
+              <div class="fg">
+                <label>Zip <span class="req">*</span></label>
+                <input type="text" name="business_zipcode" autocomplete="postal-code" placeholder="12345" maxlength="10">
+                <span class="err-msg"></span>
+              </div>
+            </div>
+
+            <div class="fg">
+              <label>Country</label>
+              <input type="text" name="business_country" value="USA" readonly>
+              <span class="help">Default: USA</span>
+            </div>
+
+            <div class="divider"></div>
+            <h3 class="sub-title">Platform Service Fee (Paid by client)</h3>
+            <div class="row row-2">
+              <div class="fg">
+                <label>Mode</label>
+                <select name="platform_fee_client_mode">
+                  <option value="">None</option>
+                  <option value="FIXED">FIXED</option>
+                  <option value="PERCENTAGE">PERCENTAGE</option>
+                </select>
+                <span class="err-msg"></span>
+              </div>
+              <div class="fg">
+                <label>Amount</label>
+                <input type="text" name="platform_fee_client_amount" inputmode="decimal" placeholder="10.00">
+                <span class="help">Use 2 decimals (e.g. 10.00)</span>
+                <span class="err-msg"></span>
+              </div>
+            </div>
+
+            <h3 class="sub-title" style="margin-top:18px;">Platform Service Fee (Charged from business commission)</h3>
+            <div class="row row-2">
+              <div class="fg">
+                <label>Mode</label>
+                <select name="platform_fee_commission_mode">
+                  <option value="">None</option>
+                  <option value="FIXED">FIXED</option>
+                  <option value="PERCENTAGE">PERCENTAGE</option>
+                </select>
+                <span class="err-msg"></span>
+              </div>
+              <div class="fg">
+                <label>Amount</label>
+                <input type="text" name="platform_fee_commission_amount" inputmode="decimal" placeholder="10.00">
+                <span class="help">Use 2 decimals (e.g. 10.00)</span>
+                <span class="err-msg"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Step 2: Review ───────────── -->
+          <div class="step-panel" data-step="2">
+            <h2 class="sec-title">Business Location</h2>
+            <p class="sec-desc">Location configuration for service coverage and address</p>
+
+            <div class="fg">
+              <label>Location Name <span class="req">*</span></label>
+              <input type="text" name="location_name" placeholder="Location name">
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="fg">
+              <label>Location Phone <span class="req">*</span></label>
+              <input type="tel" name="location_phone" data-phone-e164 placeholder="+18887776543" autocomplete="tel">
+              <span class="help" data-phone-help></span>
+              <span class="err-msg"></span>
+            </div>
+
+            <div class="row row-2">
+              <div class="fg">
+                <label>Operation Type</label>
+                <select name="location_operation_type">
+                  <option value="Virtual">Virtual</option>
+                  <option value="Physical">Physical</option>
+                  <option value="Hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Serviceable States</label>
+                <select name="location_serviceable_states" data-states-multi multiple size="6"></select>
+                <span class="help" id="svc-preview">Saved as: <code>{AZ,CA,GA}</code></span>
+              </div>
+            </div>
+
+            <div class="fg">
+              <label class="chk">
+                <input type="checkbox" id="loc-same" name="location_same_as_business" value="true">
+                <span>Same as business address</span>
+              </label>
+            </div>
+
+            <div id="loc-address-fields">
+              <div class="fg">
+                <label>Address Line 1 <span class="req">*</span></label>
+                <input type="text" name="location_address_line1" autocomplete="address-line1" placeholder="123 Main Street">
+                <span class="err-msg"></span>
+              </div>
+
+              <div class="fg">
+                <label>Address Line 2</label>
+                <input type="text" name="location_address_line2" autocomplete="address-line2" placeholder="Suite 100">
+              </div>
+
+              <div class="row row-3">
+                <div class="fg">
+                  <label>City <span class="req">*</span></label>
+                  <input type="text" name="location_city" autocomplete="address-level2">
+                  <span class="err-msg"></span>
+                </div>
+                <div class="fg">
+                  <label>State <span class="req">*</span></label>
+                  <select name="location_state" data-states autocomplete="address-level1">
+                    <option value="">Select&hellip;</option>
+                  </select>
+                  <span class="err-msg"></span>
+                </div>
+                <div class="fg">
+                  <label>Zip <span class="req">*</span></label>
+                  <input type="text" name="location_zipcode" autocomplete="postal-code" placeholder="12345" maxlength="10">
+                  <span class="err-msg"></span>
+                </div>
+              </div>
+
+              <div class="fg">
+                <label>Country</label>
+                <input type="text" name="location_country" value="USA" readonly>
+                <span class="help">Default: USA</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-panel" data-step="3">
+            <h2 class="sec-title">Review &amp; Submit</h2>
+            <p class="sec-desc">Please verify everything looks correct</p>
+            <div id="review-content"></div>
+          </div>
+
+        </div><!-- /card -->
+
+        <!-- Navigation -->
+        <div class="nav anim-up-d2">
+          <button type="button" class="btn btn-g" id="btn-back" onclick="prevStep()" style="visibility:hidden">
+            <span class="btn-arrow">&larr;</span> Back
+          </button>
+          <button type="button" class="btn btn-p" id="btn-next" onclick="nextStep()">
+            Continue <span class="btn-arrow">&rarr;</span>
+          </button>
+          <button type="button" class="btn btn-p" id="btn-submit" onclick="submitForm()" style="display:none">
+            Submit Onboarding <span class="btn-arrow">&rarr;</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Success State ──────────────────── -->
+    <div id="state-success" class="state" hidden>
+      <div class="card anim-up">
+        <div class="state-center">
+          <svg class="check-svg" viewBox="0 0 52 52">
+            <circle class="check-ring" cx="26" cy="26" r="25"/>
+            <path class="check-mark" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+          <h2 style="color:var(--ok)">Onboarding Complete!</h2>
+          <p class="success-sub">Your business information has been submitted successfully. Our team will be in touch shortly to finalize your setup.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">Powered by VS Digital Health</footer>
+
+  <script>
+  /* ═══════════════════════════════════════════
+     CONFIGURATION — Set before deploying
+     ═══════════════════════════════════════════ */
+  const SCRIPT_URL = ''; // Paste your Google Apps Script /exec URL here
+
+  /* ── US States ──────────────────────────── */
+  const STATES = [
+    ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+    ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District of Columbia'],
+    ['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],
+    ['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],
+    ['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+    ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],
+    ['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],
+    ['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],
+    ['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],
+    ['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],
+    ['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']
+  ];
+
+  /* ── Normalization helpers ───────────────── */
+  function normalizePhoneE164(raw) {
+    const digits = String(raw || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) return '+1' + digits;
+    if (digits.length === 11 && digits[0] === '1') return '+' + digits;
+    if (digits.length >= 11 && digits.length <= 15) return '+' + digits;
+    return '';
+  }
+
+  function formatUsPhoneFromDigits(digits) {
+    const d = String(digits || '').replace(/\D/g, '');
+    const last10 = d.length >= 10 ? d.slice(-10) : d;
+    if (last10.length !== 10) return '';
+    return `(${last10.slice(0, 3)}) ${last10.slice(3, 6)}-${last10.slice(6)}`;
+  }
+
+  function normalizeMoney(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    const n = Number(s);
+    if (!Number.isFinite(n)) return '';
+    return n.toFixed(2);
+  }
+
+  function normalizeServiceableStatesFromSelect(sel) {
+    if (!sel) return '';
+    const codes = Array.from(sel.selectedOptions || [])
+      .map(o => String(o.value || '').trim().toUpperCase())
+      .filter(Boolean);
+    if (!codes.length) return '';
+    return `{${codes.join(',')}}`;
+  }
+
+  /* ── Validation Rules ───────────────────── */
+  const V = {
+    organization_name: v => v.trim() ? '' : 'Organization name is required',
+    business_name:      v => v.trim() ? '' : 'Business name is required',
+    business_phone:     v => normalizePhoneE164(v) ? '' : 'Valid phone required (E.164)',
+
+    business_address_line1: v => v.trim() ? '' : 'Address is required',
+    business_city:          v => v.trim() ? '' : 'City is required',
+    business_state:         v => v ? '' : 'Please select a state',
+    business_zipcode:       v => /^\d{5}(-\d{4})?$/.test(v.trim()) ? '' : 'Valid ZIP code required',
+
+    platform_fee_client_amount: v => (v.trim() ? (normalizeMoney(v) ? '' : 'Amount must be numeric') : ''),
+    platform_fee_commission_amount: v => (v.trim() ? (normalizeMoney(v) ? '' : 'Amount must be numeric') : ''),
+
+    location_name:      v => v.trim() ? '' : 'Location name is required',
+    location_phone:     v => normalizePhoneE164(v) ? '' : 'Valid phone required (E.164)',
+
+    location_address_line1: v => v.trim() ? '' : 'Address is required',
+    location_city:          v => v.trim() ? '' : 'City is required',
+    location_state:         v => v ? '' : 'Please select a state',
+    location_zipcode:       v => /^\d{5}(-\d{4})?$/.test(v.trim()) ? '' : 'Valid ZIP code required',
+  };
+
+  /* Fields validated per step */
+  const STEP_F = [
+    ['organization_name','business_name','business_phone'],
+    ['business_address_line1','business_city','business_state','business_zipcode','platform_fee_client_amount','platform_fee_commission_amount'],
+    ['location_name','location_phone','location_address_line1','location_city','location_state','location_zipcode'],
+    []
+  ];
+
+  /* ── State ──────────────────────────────── */
+  let step = 0;
+  let token = '';
+  let invite = null;
+
+  /* ── DOM Shortcuts ──────────────────────── */
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+
+  /* ── Init ───────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', async () => {
+    populateStates();
+    setupPhones();
+    setupServiceableStates();
+    setupLocationSameAddress();
+    setupDefaults();
+    setupBlurValidation();
+
+    if (!SCRIPT_URL) { show('config'); return; }
+
+    const params = new URLSearchParams(location.search);
+    token = params.get('token') || '';
+
+    // Strip token from URL to prevent leaking via referrer/history
+    if (token && history.replaceState) {
+      const clean = location.pathname + location.hash;
+      history.replaceState(null, '', clean);
+    }
+
+    if (!token) {
+      show('invalid', '\u{1F517}', 'No Invite Token', 'Please use the link from your invitation email.');
+      return;
+    }
+
+    try {
+      const res = await api({ action: 'validate_token', token });
+      if (res.data && res.data.valid) {
+        invite = res.data.invite;
+        if (invite.business_name) {
+          const inp = $('[name="business_name"]');
+          if (inp) inp.value = invite.business_name;
+
+          const loc = $('[name="location_name"]');
+          if (loc && !loc.value.trim()) loc.value = invite.business_name;
+        }
+        show('form');
+      } else {
+        const reason = res.data?.reason || 'Unknown error';
+        const icons = { 'Already submitted': '\u2705', 'Expired': '\u23F0', 'Invalid token': '\u{1F512}', 'Missing token': '\u{1F517}' };
+        const descs = {
+          'Already submitted': 'This onboarding form has already been completed.',
+          'Expired': 'This invite link has expired. Please request a new one.',
+        };
+        show('invalid', icons[reason] || '\u{1F512}', reason, descs[reason] || 'Please contact support for a new invite link.');
+      }
+    } catch (e) {
+      show('invalid', '\u26A0\uFE0F', 'Connection Error', 'Unable to verify your invitation. Please check your connection and try again.');
+      // Add retry button for connection errors
+      const desc = $('#inv-desc');
+      if (desc && !desc.querySelector('button')) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-p';
+        btn.style.marginTop = '16px';
+        btn.textContent = 'Try Again';
+        btn.onclick = () => location.reload();
+        desc.after(btn);
+      }
+    }
+  });
+
+  /* ── API Call ───────────────────────────── */
+  async function api(data, timeoutMs = 30000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        redirect: 'follow',
+        signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /* ── State Switching ────────────────────── */
+  function show(name, ...args) {
+    const cur = document.querySelector('.state:not([hidden])');
+    const next = $('#state-' + name);
+    if (!next) return;
+
+    if (name === 'invalid') {
+      $('#inv-icon').textContent = args[0] || '\u{1F512}';
+      $('#inv-title').textContent = args[1] || 'Invalid Link';
+      $('#inv-desc').textContent = args[2] || '';
+    }
+
+    if (cur && cur !== next) {
+      cur.classList.add('fading');
+      setTimeout(() => { cur.hidden = true; cur.classList.remove('fading'); next.hidden = false; }, 300);
+    } else {
+      if (cur) cur.hidden = true;
+      next.hidden = false;
+    }
+  }
+
+  /* ── Step Navigation ────────────────────── */
+  function nextStep() {
+    if (!validateStep(step)) return;
+    if (step < 3) go(step + 1, 'fwd');
+  }
+
+  function prevStep() {
+    if (step > 0) go(step - 1, 'bwd');
+  }
+
+  function goToStep(n) {
+    if (n === step) return;
+    go(n, n > step ? 'fwd' : 'bwd');
+  }
+
+  let transitioning = false;
+  function go(to, dir) {
+    if (transitioning) return;
+    transitioning = true;
+    const panels = $$('.step-panel');
+    const cur = panels[step];
+    const nxt = panels[to];
+    const outA = dir === 'fwd' ? 'slideOutL' : 'slideOutR';
+    const inA  = dir === 'fwd' ? 'slideInR'  : 'slideInL';
+
+    cur.style.animation = outA + ' 0.25s ease forwards';
+
+    setTimeout(() => {
+      cur.classList.remove('on');
+      cur.style.animation = '';
+      cur.style.display = 'none';
+
+      nxt.style.display = 'block';
+      nxt.classList.add('on');
+      nxt.style.animation = inA + ' 0.3s ease forwards';
+
+      step = to;
+      syncStepper();
+      syncNav();
+      if (to === 3) buildReview();
+      $('.stepper').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      transitioning = false;
+    }, 240);
+  }
+
+  function syncStepper() {
+    $$('.step-item').forEach((el, i) => {
+      el.classList.toggle('active', i === step);
+      el.classList.toggle('done', i < step);
+      const c = el.querySelector('.step-circle');
+      c.innerHTML = i < step
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>'
+        : String(i + 1);
+    });
+    $$('.step-conn').forEach((el, i) => {
+      el.classList.toggle('filled', i < step);
+    });
+  }
+
+  function syncNav() {
+    $('#btn-back').style.visibility = step > 0 ? 'visible' : 'hidden';
+    $('#btn-next').style.display = step < 3 ? '' : 'none';
+    $('#btn-submit').style.display = step === 3 ? '' : 'none';
+  }
+
+  /* ── Validation ─────────────────────────── */
+  function validateStep(s) {
+    const fields = STEP_F[s];
+    let ok = true, first = null;
+
+    if (s === 1) {
+      // Normalize fee inputs for better UX before validating cross-field rules
+      const a1 = $('[name="platform_fee_client_amount"]');
+      const a2 = $('[name="platform_fee_commission_amount"]');
+      if (a1 && a1.value.trim()) a1.value = normalizeMoney(a1.value) || a1.value.trim();
+      if (a2 && a2.value.trim()) a2.value = normalizeMoney(a2.value) || a2.value.trim();
+    }
+
+    if (s === 2 && $('#loc-same') && $('#loc-same').checked) {
+      syncLocationAddressFromBusiness();
+    }
+
+    fields.forEach(name => {
+      const inp = $(`[name="${name}"]`);
+      if (!inp) return;
+      const err = V[name] ? V[name](inp.value) : '';
+      setErr(inp, err);
+      if (err && ok) { ok = false; first = inp; }
+    });
+
+    if (s === 1) {
+      ok = validateFeeGroup('platform_fee_client_mode', 'platform_fee_client_amount', 'Client fee') && ok;
+      ok = validateFeeGroup('platform_fee_commission_mode', 'platform_fee_commission_amount', 'Commission fee') && ok;
+    }
+
+    if (!ok && first) {
+      first.focus();
+      const card = $('.card');
+      card.style.animation = 'shake 0.4s ease';
+      setTimeout(() => card.style.animation = '', 400);
+    }
+    return ok;
+  }
+
+  function validateFeeGroup(modeName, amountName, label) {
+    const modeEl = $(`[name="${modeName}"]`);
+    const amtEl = $(`[name="${amountName}"]`);
+    if (!modeEl || !amtEl) return true;
+
+    const mode = String(modeEl.value || '').trim().toUpperCase();
+    const amtRaw = String(amtEl.value || '').trim();
+    const amt = amtRaw ? normalizeMoney(amtRaw) : '';
+
+    // Clear first (then set specific error)
+    setErr(modeEl, '');
+    setErr(amtEl, '');
+
+    if (!mode && !amtRaw) return true;
+
+    let ok = true;
+    if (amtRaw && !mode) {
+      setErr(modeEl, `${label}: mode required when amount provided`);
+      ok = false;
+    } else if (mode && !amtRaw) {
+      setErr(amtEl, `${label}: amount required when mode selected`);
+      ok = false;
+    }
+
+    if (mode && mode !== 'FIXED' && mode !== 'PERCENTAGE') {
+      setErr(modeEl, `${label}: mode must be FIXED or PERCENTAGE`);
+      ok = false;
+    }
+
+    if (amtRaw && !amt) {
+      setErr(amtEl, `${label}: amount must be numeric`);
+      ok = false;
+    }
+
+    if (amt && ok) amtEl.value = amt;
+    return ok;
+  }
+
+  function setErr(inp, msg) {
+    const em = inp.parentElement.querySelector('.err-msg');
+    if (msg) {
+      inp.classList.add('has-error');
+      if (em) { em.textContent = msg; em.classList.add('show'); }
+    } else {
+      inp.classList.remove('has-error');
+      if (em) em.classList.remove('show');
+    }
+  }
+
+  function setupBlurValidation() {
+    Object.keys(V).forEach(name => {
+      const inp = $(`[name="${name}"]`);
+      if (!inp) return;
+      inp.addEventListener('blur', () => {
+        if (inp.value) setErr(inp, V[name](inp.value));
+      });
+      inp.addEventListener('input', () => {
+        if (inp.classList.contains('has-error')) setErr(inp, V[name](inp.value));
+      });
+    });
+  }
+
+  /* ── Form Data ──────────────────────────── */
+  function getData() {
+    const v = name => ($(`[name="${name}"]`) ? $(`[name="${name}"]`).value : '');
+    const checked = name => {
+      const el = $(`[name="${name}"]`);
+      return !!(el && el.checked);
+    };
+
+    const orgName = String(v('organization_name')).trim();
+    const bizName = String(v('business_name')).trim();
+
+    // Keep location in sync when "Same as business address" is enabled
+    if ($('#loc-same') && $('#loc-same').checked) {
+      syncLocationAddressFromBusiness();
+    }
+
+    const svcSel = $(`[name="location_serviceable_states"]`);
+    const svcStates = normalizeServiceableStatesFromSelect(svcSel);
+
+    const clientMode = String(v('platform_fee_client_mode')).trim().toUpperCase();
+    const clientAmt = normalizeMoney(v('platform_fee_client_amount'));
+    const commMode = String(v('platform_fee_commission_mode')).trim().toUpperCase();
+    const commAmt = normalizeMoney(v('platform_fee_commission_amount'));
+
+    const businessPhone = normalizePhoneE164(v('business_phone')) || String(v('business_phone')).trim();
+    const locationPhone = normalizePhoneE164(v('location_phone')) || String(v('location_phone')).trim();
+
+    return {
+      organization: { name: orgName },
+      business: {
+        organization_name: orgName,
+        name: bizName,
+        description: String(v('business_description')).trim() || undefined,
+        phone: businessPhone,
+        tagline: String(v('business_tagline')).trim() || undefined,
+        do_not_display_on_header: checked('business_do_not_display_on_header'),
+        address_line1: String(v('business_address_line1')).trim(),
+        address_line2: String(v('business_address_line2')).trim() || undefined,
+        city: String(v('business_city')).trim(),
+        state: String(v('business_state')).trim(),
+        zipcode: String(v('business_zipcode')).trim(),
+        country: String(v('business_country')).trim() || 'USA',
+        platform_fee_client_mode: clientMode || undefined,
+        platform_fee_client_amount: clientAmt || undefined,
+        platform_fee_commission_mode: commMode || undefined,
+        platform_fee_commission_amount: commAmt || undefined,
+      },
+      location: {
+        business_name: bizName,
+        name: String(v('location_name')).trim(),
+        phone: locationPhone,
+        operation_type: String(v('location_operation_type')).trim() || 'Virtual',
+        serviceable_states: svcStates || undefined,
+        address_line1: String(v('location_address_line1')).trim(),
+        address_line2: String(v('location_address_line2')).trim() || undefined,
+        city: String(v('location_city')).trim(),
+        state: String(v('location_state')).trim(),
+        zipcode: String(v('location_zipcode')).trim(),
+        country: String(v('location_country')).trim() || 'USA',
+      }
+    };
+  }
+
+  /* ── Review Builder ─────────────────────── */
+  function buildReview() {
+    const d = getData();
+
+    const stateName = code => {
+      const sn = STATES.find(s => s[0] === code);
+      return sn ? sn[1] : code;
+    };
+
+    const formatAddr = (addr) => {
+      let a = esc(addr.address_line1 || '');
+      if (addr.address_line2) a += ', ' + esc(addr.address_line2);
+      a += '<br>' + esc(addr.city || '') + ', ' + esc(stateName(addr.state || '')) + ' ' + esc(addr.zipcode || '');
+      return a;
+    };
+
+    const fee = (mode, amount) => {
+      if (!mode && !amount) return 'None';
+      if (mode && amount) return `${mode} — ${amount}`;
+      return mode || amount || 'None';
+    };
+
+    const html = `
+      <div class="rev-sec">
+        <div class="rev-head"><h3>Organization</h3><button type="button" class="rev-edit" onclick="goToStep(0)">Edit</button></div>
+        ${rr('Name', d.organization.name)}
+      </div>
+
+      <div class="rev-sec">
+        <div class="rev-head"><h3>Business</h3><button type="button" class="rev-edit" onclick="goToStep(0)">Edit</button></div>
+        ${rr('Name', d.business.name)}
+        ${rr('Phone', d.business.phone)}
+        ${d.business.tagline ? rr('Tagline', d.business.tagline) : ''}
+        ${d.business.description ? rr('Description', d.business.description) : ''}
+        ${rr('Do not display on header', d.business.do_not_display_on_header ? 'True' : 'False')}
+        <div class="rev-row"><span class="rev-lbl">Address</span><span class="rev-val">${formatAddr(d.business)}</span></div>
+        ${rr('Client fee', fee(d.business.platform_fee_client_mode, d.business.platform_fee_client_amount))}
+        ${rr('Commission fee', fee(d.business.platform_fee_commission_mode, d.business.platform_fee_commission_amount))}
+      </div>
+
+      <div class="rev-sec">
+        <div class="rev-head"><h3>Location</h3><button type="button" class="rev-edit" onclick="goToStep(2)">Edit</button></div>
+        ${rr('Name', d.location.name)}
+        ${rr('Phone', d.location.phone)}
+        ${rr('Operation Type', d.location.operation_type)}
+        ${rr('Serviceable States', d.location.serviceable_states || '—')}
+        <div class="rev-row"><span class="rev-lbl">Address</span><span class="rev-val">${formatAddr(d.location)}</span></div>
+      </div>`;
+
+    $('#review-content').innerHTML = html;
+  }
+
+  function rr(label, val) {
+    return `<div class="rev-row"><span class="rev-lbl">${label}</span><span class="rev-val">${esc(val)}</span></div>`;
+  }
+
+  /* ── Toast ──────────────────────────────── */
+  let toastTimer = null;
+  function showToast(msg, ms = 5000) {
+    let t = document.querySelector('.toast');
+    if (t) t.remove();
+    clearTimeout(toastTimer);
+    t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    toastTimer = setTimeout(() => t.remove(), ms);
+  }
+
+  /* ── Submit ─────────────────────────────── */
+  let submitting = false;
+  async function submitForm() {
+    if (submitting) return;
+    // Revalidate all steps before submit (user may have edited via review "Edit" buttons)
+    const s0ok = validateStep(0), s1ok = validateStep(1), s2ok = validateStep(2);
+    if (!s0ok) { goToStep(0); return; }
+    if (!s1ok) { goToStep(1); return; }
+    if (!s2ok) { goToStep(2); return; }
+    submitting = true;
+    const btn = $('#btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spin"></span> Submitting&hellip;';
+
+    try {
+      const fields = getData();
+      const res = await api({ action: 'submit_onboarding', token, fields });
+
+      if (res.status === 'success' && res.data?.submitted) {
+        show('success');
+      } else {
+        throw new Error(res.data?.reason || res.message || 'Submission failed');
+      }
+    } catch (e) {
+      submitting = false;
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Onboarding <span class="btn-arrow">&rarr;</span>';
+      showToast('Submission failed: ' + e.message);
+    }
+  }
+
+  /* ── Utilities ──────────────────────────── */
+  function esc(s) { const t = document.createElement('span'); t.textContent = s || ''; return t.innerHTML; }
+
+  function populateStates() {
+    $$('select[data-states]').forEach(sel => {
+      STATES.forEach(([a, n]) => {
+        const o = document.createElement('option');
+        o.value = a;
+        o.textContent = n;
+        sel.appendChild(o);
+      });
+    });
+
+    $$('select[data-states-multi]').forEach(sel => {
+      STATES.forEach(([a, n]) => {
+        const o = document.createElement('option');
+        o.value = a;
+        o.textContent = `${a} — ${n}`;
+        sel.appendChild(o);
+      });
+    });
+  }
+
+  function setupPhones() {
+    $$('input[data-phone-e164]').forEach(inp => {
+      const fg = inp.closest('.fg');
+      const help = fg ? fg.querySelector('[data-phone-help]') : null;
+
+      const update = () => {
+        if (!help) return;
+        const digits = String(inp.value || '').replace(/\D/g, '');
+        const e164 = normalizePhoneE164(inp.value);
+        const us = formatUsPhoneFromDigits(digits);
+
+        if (!inp.value.trim()) {
+          help.textContent = 'Format: +18887776543';
+          return;
+        }
+
+        if (e164) {
+          help.textContent = `Saved as: ${e164}${us ? ` • ${us}` : ''}`;
+        } else {
+          help.textContent = 'Enter a valid phone in E.164 format (e.g. +18887776543)';
+        }
+      };
+
+      inp.addEventListener('input', update);
+      inp.addEventListener('blur', () => {
+        const e164 = normalizePhoneE164(inp.value);
+        if (e164) inp.value = e164;
+        update();
+      });
+
+      update();
+    });
+  }
+
+  function setupServiceableStates() {
+    $$('select[data-states-multi]').forEach(sel => {
+      const update = () => {
+        const s = normalizeServiceableStatesFromSelect(sel);
+        const help = $('#svc-preview');
+        if (!help) return;
+        help.innerHTML = s ? `Saved as: <code>${esc(s)}</code>` : 'Saved as: <code>{AZ,CA,GA}</code>';
+      };
+      sel.addEventListener('change', update);
+      update();
+    });
+  }
+
+  function setupLocationSameAddress() {
+    const chk = $('#loc-same');
+    const box = $('#loc-address-fields');
+    if (!chk || !box) return;
+
+    const apply = () => {
+      const locked = !!chk.checked;
+      box.classList.toggle('is-locked', locked);
+      setLocationAddressLocked(locked);
+      if (locked) syncLocationAddressFromBusiness();
+    };
+
+    chk.addEventListener('change', apply);
+
+    // When business address changes, keep location address synced if locked
+    ['business_address_line1','business_address_line2','business_city','business_state','business_zipcode','business_country'].forEach(name => {
+      const el = $(`[name="${name}"]`);
+      if (!el) return;
+      el.addEventListener('input', () => { if (chk.checked) syncLocationAddressFromBusiness(); });
+      el.addEventListener('change', () => { if (chk.checked) syncLocationAddressFromBusiness(); });
+    });
+
+    apply();
+  }
+
+  function setLocationAddressLocked(locked) {
+    const roNames = ['location_address_line1','location_address_line2','location_city','location_zipcode'];
+    roNames.forEach(name => {
+      const el = $(`[name="${name}"]`);
+      if (el) el.readOnly = locked;
+    });
+
+    const stateSel = $(`[name="location_state"]`);
+    if (stateSel) stateSel.disabled = locked;
+  }
+
+  function syncLocationAddressFromBusiness() {
+    const pairs = [
+      ['business_address_line1','location_address_line1'],
+      ['business_address_line2','location_address_line2'],
+      ['business_city','location_city'],
+      ['business_state','location_state'],
+      ['business_zipcode','location_zipcode'],
+      ['business_country','location_country'],
+    ];
+
+    pairs.forEach(([from, to]) => {
+      const src = $(`[name="${from}"]`);
+      const dst = $(`[name="${to}"]`);
+      if (!src || !dst) return;
+      dst.value = src.value;
+    });
+  }
+
+  function setupDefaults() {
+    const orgInp = $('[name="organization_name"]');
+    if (orgInp && !orgInp.value.trim()) {
+      const cached = localStorage.getItem('vsdh_org_name') || '';
+      if (cached) orgInp.value = cached;
+    }
+    if (orgInp) {
+      orgInp.addEventListener('input', () => localStorage.setItem('vsdh_org_name', orgInp.value.trim()));
+    }
+
+    const bizName = $('[name="business_name"]');
+    const locName = $('[name="location_name"]');
+    if (bizName && locName) {
+      bizName.addEventListener('input', () => {
+        if (!locName.value.trim()) locName.value = bizName.value.trim();
+      });
+    }
+
+    const bizPhone = $('[name="business_phone"]');
+    const locPhone = $('[name="location_phone"]');
+    if (bizPhone && locPhone) {
+      bizPhone.addEventListener('blur', () => {
+        if (!locPhone.value.trim()) locPhone.value = bizPhone.value.trim();
+      });
+    }
+
+    const businessCountry = $('[name="business_country"]');
+    if (businessCountry && !businessCountry.value.trim()) businessCountry.value = 'USA';
+    const locationCountry = $('[name="location_country"]');
+    if (locationCountry && !locationCountry.value.trim()) locationCountry.value = 'USA';
+
+    // Fee pair UX: clear cross-field errors as user edits
+    const feePairs = [
+      ['platform_fee_client_mode', 'platform_fee_client_amount', 'Client fee'],
+      ['platform_fee_commission_mode', 'platform_fee_commission_amount', 'Commission fee'],
+    ];
+    feePairs.forEach(([modeName, amtName, label]) => {
+      const modeEl = $(`[name="${modeName}"]`);
+      const amtEl = $(`[name="${amtName}"]`);
+      if (modeEl) modeEl.addEventListener('change', () => validateFeeGroup(modeName, amtName, label));
+      if (amtEl) amtEl.addEventListener('input', () => validateFeeGroup(modeName, amtName, label));
+    });
+  }
+  </script>
+</body>
+</html>

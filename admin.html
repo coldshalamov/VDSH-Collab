@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VSDH Onboarding Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF9F6; --bg-grad: linear-gradient(160deg, #FAF9F6 0%, #F3F0EB 100%);
+      --surface: #FFFFFF; --border: #E5E2DC; --border-lt: #F0EDE8;
+      --primary: #1B4D3E; --primary-h: #153D31; --primary-bg: #EAF2EF;
+      --accent: #D4952A; --accent-bg: #FEF7EC;
+      --text: #1A1A17; --text-2: #6B6B63; --text-3: #9C9C93;
+      --err: #C53030; --err-bg: #FFF5F5;
+      --ok: #276749; --ok-bg: #F0FFF4;
+      --warn: #B7791F; --warn-bg: #FFFFF0;
+      --r: 16px; --rs: 8px;
+      --shadow: 0 1px 3px rgba(26,26,23,.06), 0 2px 8px rgba(26,26,23,.04);
+      --font-d: 'Instrument Serif', Georgia, serif;
+      --font-b: 'Outfit', system-ui, sans-serif;
+      --ease: cubic-bezier(.4,0,.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font-b); background: var(--bg-grad); color: var(--text); min-height: 100vh; }
+
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.022;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") repeat;
+    }
+
+    /* ── Top Bar ──────────────────────────── */
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border-lt);
+      padding: 18px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar h1 { font-family: var(--font-d); font-size: 22px; font-weight: 400; color: var(--primary); }
+    .topbar .tag { font-size: 12px; color: var(--text-3); font-weight: 500; margin-left: 12px; }
+
+    /* ── Layout ───────────────────────────── */
+    .wrap { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    /* ── Cards ────────────────────────────── */
+    .card {
+      background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow);
+      padding: 28px; border: 1px solid var(--border-lt); margin-bottom: 24px;
+    }
+    .card-title { font-family: var(--font-d); font-size: 20px; font-weight: 400; margin-bottom: 4px; }
+    .card-desc { font-size: 14px; color: var(--text-2); margin-bottom: 20px; }
+
+    /* ── Stats Grid ───────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat {
+      background: var(--surface); border-radius: 12px; padding: 20px;
+      border: 1px solid var(--border-lt); box-shadow: var(--shadow);
+      text-align: center; transition: transform 0.2s;
+    }
+    .stat:hover { transform: translateY(-2px); }
+    .stat-num { font-size: 32px; font-weight: 700; line-height: 1.2; }
+    .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-top: 4px; }
+    .stat-total .stat-num { color: var(--text); }
+    .stat-pending .stat-num { color: var(--accent); }
+    .stat-emailed .stat-num { color: #2B6CB0; }
+    .stat-done .stat-num { color: var(--ok); }
+
+    /* ── Config Panel ─────────────────────── */
+    .cfg { margin-bottom: 24px; }
+    .cfg-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: end; }
+    .cfg label { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+    .cfg input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: var(--rs); font-size: 14px; font-family: var(--font-b);
+      outline: none; transition: border-color 0.2s;
+    }
+    .cfg input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(27,77,62,.08); }
+    .cfg-saved { font-size: 13px; color: var(--ok); padding: 8px 0; display: none; }
+    .cfg-saved.show { display: block; animation: fadeIn 0.3s ease; }
+
+    /* ── Upload Zone ──────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 40px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: var(--primary); background: var(--primary-bg); }
+    .drop-zone input { display: none; }
+    .drop-zone .dz-icon { font-size: 36px; margin-bottom: 8px; display: block; opacity: 0.7; }
+    .drop-zone p { color: var(--text-2); font-size: 14px; }
+    .drop-zone .dz-file { font-size: 14px; color: var(--primary); font-weight: 600; margin-top: 8px; display: none; }
+
+    /* ── Preview Table ────────────────────── */
+    .preview { margin-top: 20px; display: none; }
+    .preview.show { display: block; }
+    .preview-info { font-size: 14px; color: var(--text-2); margin-bottom: 12px; }
+    .preview-info strong { color: var(--text); }
+
+    /* ── Shared Table Styles ──────────────── */
+    .tbl-wrap { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border-lt); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3);
+      background: #FAFAF8; border-bottom: 1px solid var(--border);
+    }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border-lt); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #FDFCFA; }
+
+    /* ── Badges ───────────────────────────── */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 600;
+    }
+    .badge-pending { background: var(--accent-bg); color: var(--accent); }
+    .badge-emailed { background: #EBF4FF; color: #2B6CB0; }
+    .badge-completed { background: var(--ok-bg); color: var(--ok); }
+    .badge-expired { background: var(--err-bg); color: var(--err); }
+    .badge-created { background: var(--primary-bg); color: var(--primary); }
+    .badge-existing { background: #F0F7FF; color: #2C5282; }
+    .badge-skipped { background: #F7F7F7; color: var(--text-3); }
+
+    /* ── Buttons ──────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px; border-radius: var(--rs);
+      font-family: var(--font-b); font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.2s var(--ease);
+    }
+    .btn-p { background: var(--primary); color: #fff; }
+    .btn-p:hover:not(:disabled) { background: var(--primary-h); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27,77,62,.2); }
+    .btn-p:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-g { background: transparent; color: var(--text-2); border: 1.5px solid var(--border); }
+    .btn-g:hover { border-color: var(--text-2); color: var(--text); }
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+    /* ── Actions Bar ──────────────────────── */
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+    /* ── Progress Bar ─────────────────────── */
+    .progress-wrap { margin-top: 16px; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-bar { height: 6px; background: var(--border-lt); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; width: 0; }
+    .progress-text { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+
+    /* ── Results ──────────────────────────── */
+    .results { margin-top: 20px; display: none; }
+    .results.show { display: block; }
+    .result-summary {
+      padding: 14px 18px; border-radius: var(--rs); margin-bottom: 16px;
+      font-size: 14px; font-weight: 500;
+    }
+    .result-ok { background: var(--ok-bg); color: var(--ok); border: 1px solid #C6F6D5; }
+    .result-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #FEFCBF; }
+
+    /* ── Search ───────────────────────────── */
+    .search-bar { margin-bottom: 16px; }
+    .search-bar input {
+      width: 100%; max-width: 320px; padding: 10px 14px 10px 36px;
+      border: 1.5px solid var(--border); border-radius: var(--rs);
+      font-size: 14px; font-family: var(--font-b); outline: none;
+      background: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='7' cy='7' r='5.5' stroke='%239C9C93' stroke-width='1.5'/%3E%3Cpath d='M11 11l3.5 3.5' stroke='%239C9C93' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 12px center;
+      transition: border-color 0.2s;
+    }
+    .search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(27,77,62,.08); }
+
+    /* ── Copy Button ──────────────────────── */
+    .copy-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 10px; font-size: 12px; font-family: var(--font-b);
+      color: var(--text-2); cursor: pointer; transition: all 0.2s;
+    }
+    .copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .copy-btn.copied { border-color: var(--ok); color: var(--ok); }
+
+    /* ── Empty State ──────────────────────── */
+    .empty { text-align: center; padding: 40px 0; color: var(--text-3); font-size: 14px; }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+
+    /* ── Alerts ───────────────────────────── */
+    .alert { padding: 14px 18px; border-radius: var(--rs); font-size: 14px; margin-bottom: 16px; }
+    .alert-err { background: var(--err-bg); color: var(--err); border: 1px solid #FED7D7; }
+
+    /* ── Animations ───────────────────────── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .anim-up { animation: slideUp 0.4s ease both; }
+    .anim-up-d1 { animation: slideUp 0.4s ease 0.1s both; }
+
+    /* ── Footer ───────────────────────────── */
+    .footer { text-align: center; padding: 16px 0; font-size: 12px; color: var(--text-3); }
+
+    /* ── Responsive ───────────────────────── */
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .cfg-row { grid-template-columns: 1fr; }
+      .topbar { padding: 16px 20px; }
+      .card { padding: 20px; }
+      td, th { padding: 8px 10px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="topbar">
+    <div style="display:flex;align-items:baseline;">
+      <h1>Onboarding Admin</h1>
+      <span class="tag">VSDH</span>
+    </div>
+    <button class="btn btn-sm btn-g" onclick="toggleConfig()" id="cfg-toggle">Settings</button>
+  </div>
+
+  <div class="wrap">
+
+    <!-- ── Config ─────────────────────────── -->
+    <div class="card cfg" id="cfg-panel">
+      <h2 class="card-title">Connection</h2>
+      <p class="card-desc">Connect to your Google Apps Script backend</p>
+      <div class="cfg-row">
+        <div>
+          <label for="cfg-url">Script URL</label>
+          <input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div>
+          <label for="cfg-key">Admin Key</label>
+          <input type="password" id="cfg-key" placeholder="Your admin key">
+        </div>
+        <button type="button" class="btn btn-p" onclick="saveConfig()" style="margin-bottom:1px;">Save</button>
+      </div>
+      <div style="margin-top:12px;">
+        <label for="cfg-base">Onboarding Page URL</label>
+        <input type="url" id="cfg-base" placeholder="https://yourdomain.com/onboard.html" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:var(--font-b);outline:none;">
+      </div>
+      <div class="cfg-saved" id="cfg-saved">Connected and saved to browser.</div>
+    </div>
+
+    <!-- ── Stats ──────────────────────────── -->
+    <div class="stats anim-up" id="stats-grid">
+      <div class="stat stat-total"><div class="stat-num" id="s-total">—</div><div class="stat-label">Total</div></div>
+      <div class="stat stat-pending"><div class="stat-num" id="s-pending">—</div><div class="stat-label">Pending</div></div>
+      <div class="stat stat-emailed"><div class="stat-num" id="s-emailed">—</div><div class="stat-label">Emailed</div></div>
+      <div class="stat stat-done"><div class="stat-num" id="s-done">—</div><div class="stat-label">Completed</div></div>
+    </div>
+
+    <!-- ── Export Card ─────────────────────── -->
+    <div class="card anim-up-d1">
+      <h2 class="card-title">Download for VSDH Import</h2>
+      <p class="card-desc">Download 3 CSV files (Organization, Business, BusinessLocation) with template-compatible headers.</p>
+      <div class="actions" style="margin-top:14px;">
+        <button class="btn btn-p" id="btn-export" onclick="downloadImportCsvs()">Download Import CSVs</button>
+        <button class="btn btn-g" onclick="refreshImportCounts()">Refresh counts</button>
+      </div>
+      <div class="cfg-saved" id="export-status" style="display:none;margin-top:12px;"></div>
+    </div>
+
+    <!-- ── Upload Card ────────────────────── -->
+    <div class="card anim-up-d1">
+      <h2 class="card-title">Send Invites</h2>
+      <p class="card-desc">Upload a CSV with columns: <strong>Email</strong>, <strong>BusinessName</strong> (optional). Header row required.</p>
+
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file').click()">
+        <span class="dz-icon">&#128196;</span>
+        <p>Drop a CSV file here or click to browse</p>
+        <span class="dz-file" id="dz-file"></span>
+        <input type="file" id="csv-file" accept=".csv">
+      </div>
+
+      <!-- Preview -->
+      <div class="preview" id="preview">
+        <p class="preview-info"><strong id="preview-count">0</strong> invites ready to create</p>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>#</th><th>Email</th><th>Business Name</th></tr></thead><tbody id="preview-body"></tbody></table>
+        </div>
+        <div class="actions">
+          <button class="btn btn-p" id="btn-create" onclick="createInvites()">Create Invite Links</button>
+          <button class="btn btn-g" onclick="clearUpload()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progress">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-text" id="progress-text">Processing...</div>
+      </div>
+
+      <!-- Results -->
+      <div class="results" id="results">
+        <div id="result-summary"></div>
+        <div class="actions" id="result-actions"></div>
+        <div class="tbl-wrap" style="margin-top:12px;">
+          <table><thead><tr><th>Email</th><th>Business</th><th>Status</th><th>Invite Link</th></tr></thead><tbody id="result-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Invites Table ──────────────────── -->
+    <div class="card anim-up-d1">
+      <h2 class="card-title">All Invites</h2>
+      <div class="search-bar">
+        <input type="text" id="search" placeholder="Search by email or business..." oninput="filterInvites()">
+      </div>
+      <div id="invites-wrap">
+        <div class="empty"><span class="empty-icon">&#128203;</span>No invites yet. Upload a CSV above to get started.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">Powered by VS Digital Health</footer>
+
+  <script>
+  /* ═══════════════════════════════════════════
+     STATE
+     ═══════════════════════════════════════════ */
+  let scriptUrl = sessionStorage.getItem('vsdh_url') || '';
+  let adminKey  = sessionStorage.getItem('vsdh_key') || '';
+  let baseUrl   = localStorage.getItem('vsdh_base_url') || '';
+  let csvRows   = [];
+  let allInvites = [];
+  let lastResults = [];
+
+  const $ = s => document.querySelector(s);
+
+  /* ── Init ───────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    $('#cfg-url').value = scriptUrl;
+    $('#cfg-key').value = adminKey;
+    $('#cfg-base').value = baseUrl || window.location.href.replace('admin.html', 'onboard.html');
+
+    if (scriptUrl && adminKey) {
+      $('#cfg-panel').style.display = 'none';
+      loadDashboard();
+    }
+
+    setupDragDrop();
+    setupFileInput();
+  });
+
+  /* ── Config ─────────────────────────────── */
+  function saveConfig() {
+    scriptUrl = $('#cfg-url').value.trim();
+    adminKey  = $('#cfg-key').value.trim();
+    baseUrl   = $('#cfg-base').value.trim();
+
+    if (!scriptUrl || !adminKey) { alert('Script URL and Admin Key are required.'); return; }
+
+    sessionStorage.setItem('vsdh_url', scriptUrl);
+    sessionStorage.setItem('vsdh_key', adminKey);
+    if (baseUrl) localStorage.setItem('vsdh_base_url', baseUrl);
+    $('#cfg-saved').classList.add('show');
+    setTimeout(() => $('#cfg-saved').classList.remove('show'), 3000);
+    loadDashboard();
+  }
+
+  function toggleConfig() {
+    const p = $('#cfg-panel');
+    p.style.display = p.style.display === 'none' ? '' : 'none';
+  }
+
+  /* ── API (all POST, key in body only) ────── */
+  async function apiPost(data, retries = 2) {
+    data.admin_key = adminKey;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(scriptUrl, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (e) {
+        if (attempt === retries) throw e;
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      }
+    }
+  }
+
+  /* ── Dashboard Load ─────────────────────── */
+  async function loadDashboard() {
+    if (!scriptUrl || !adminKey) return;
+
+    try {
+      const [statsRes, invitesRes] = await Promise.all([
+        apiPost({ action: 'stats' }),
+        apiPost({ action: 'list_invites' })
+      ]);
+
+      if (statsRes.status === 'success') {
+        const s = statsRes.data;
+        $('#s-total').textContent = s.total;
+        $('#s-pending').textContent = s.pending;
+        $('#s-emailed').textContent = s.emailed;
+        $('#s-done').textContent = s.completed;
+      }
+
+      if (invitesRes.status === 'success') {
+        allInvites = invitesRes.data.invites || [];
+        renderInvites(allInvites);
+      }
+
+      // Also load onboarding export counts (best-effort)
+      refreshImportCounts();
+    } catch (e) {
+      console.error('Dashboard load error:', e);
+      $('#invites-wrap').innerHTML = '<div class="alert alert-err">Failed to load dashboard. Check your connection settings.</div>';
+    }
+  }
+
+  /* ── Invites Table ──────────────────────── */
+  function renderInvites(invites) {
+    const wrap = $('#invites-wrap');
+    if (!invites.length) {
+      wrap.innerHTML = '<div class="empty"><span class="empty-icon">&#128203;</span>No invites yet. Upload a CSV above to get started.</div>';
+      return;
+    }
+
+    const BADGE_CLS = new Map([['pending','pending'],['emailed','emailed'],['completed','completed'],['expired','expired']]);
+
+    let html = '<div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Business</th><th>Status</th><th>Created</th><th>Link</th></tr></thead><tbody>';
+
+    invites.forEach(inv => {
+      const cls = BADGE_CLS.get(inv.status) || 'pending';
+      const badge = `<span class="badge badge-${cls}">${esc(inv.status)}</span>`;
+      const created = inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '—';
+      const link = inv.link || '';
+
+      html += `<tr>
+        <td>${esc(inv.email)}</td>
+        <td>${esc(inv.business_name) || '<span style="color:var(--text-3)">—</span>'}</td>
+        <td>${badge}</td>
+        <td style="color:var(--text-3);font-size:13px">${created}</td>
+        <td>${link ? `<button type="button" class="copy-btn" data-link="${escAttr(link)}" onclick="copyLink(this)">Copy</button>` : '—'}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
+  }
+
+  let searchTimer;
+  function filterInvites() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const q = $('#search').value.toLowerCase();
+      if (!q) { renderInvites(allInvites); return; }
+      renderInvites(allInvites.filter(i =>
+        (i.email || '').toLowerCase().includes(q) ||
+        (i.business_name || '').toLowerCase().includes(q)
+      ));
+    }, 200);
+  }
+
+  /* ── File Upload ────────────────────────── */
+  function setupDragDrop() {
+    const dz = $('#drop-zone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('over');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  function setupFileInput() {
+    $('#csv-file').addEventListener('change', function() {
+      if (this.files.length) handleFile(this.files[0]);
+    });
+  }
+
+  function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.csv')) { alert('Please select a .csv file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('File too large. Maximum 5 MB.'); return; }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const parsed = parseCsv(text);
+      if (parsed.error) { alert(parsed.error); return; }
+      csvRows = parsed.rows;
+      if (!csvRows.length) { alert('No valid rows found. Ensure CSV has a header row and at least one data row.'); return; }
+      showPreview(file.name);
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── RFC 4180 CSV Parser ────────────────── */
+  function parseCsv(text) {
+    const allRows = [];
+    let row = [], field = '', inQ = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQ) {
+        if (ch === '"' && i + 1 < text.length && text[i + 1] === '"') { field += '"'; i++; }
+        else if (ch === '"') { inQ = false; }
+        else { field += ch; }
+      } else {
+        if (ch === '"') { inQ = true; }
+        else if (ch === ',') { row.push(field); field = ''; }
+        else if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') { row.push(field); allRows.push(row); row = []; field = ''; i++; }
+        else if (ch === '\n') { row.push(field); allRows.push(row); row = []; field = ''; }
+        else { field += ch; }
+      }
+    }
+    if (field || row.length) { row.push(field); allRows.push(row); }
+
+    if (allRows.length < 2) return { rows: [], error: '' };
+
+    const headers = allRows[0].map(normalizeInviteHeader);
+    const emailIndex = headers.findIndex(h => h === 'email');
+    const businessIndex = headers.findIndex(h => h === 'businessname');
+
+    if (emailIndex === -1) {
+      return { rows: [], error: 'CSV must include an Email header.' };
+    }
+
+    const rows = allRows.slice(1)
+      .map(cols => ({
+        email: (cols[emailIndex] || '').trim(),
+        business_name: businessIndex >= 0 ? (cols[businessIndex] || '').trim() : ''
+      }))
+      .filter(r => r.email && isValidEmail(r.email));
+
+    return { rows, error: '' };
+  }
+
+  function normalizeInviteHeader(header) {
+    return String(header || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  function isValidEmail(s) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
+
+  function showPreview(filename) {
+    $('#dz-file').textContent = filename;
+    $('#dz-file').style.display = 'block';
+    $('#preview-count').textContent = csvRows.length;
+
+    let html = '';
+    csvRows.forEach((r, i) => {
+      html += `<tr><td>${i + 1}</td><td>${esc(r.email)}</td><td>${esc(r.business_name) || '—'}</td></tr>`;
+    });
+    $('#preview-body').innerHTML = html;
+    $('#preview').classList.add('show');
+    $('#results').classList.remove('show');
+  }
+
+  function clearUpload() {
+    csvRows = [];
+    lastResults = [];
+    $('#csv-file').value = '';
+    $('#dz-file').style.display = 'none';
+    $('#preview').classList.remove('show');
+    $('#results').classList.remove('show');
+    $('#progress').classList.remove('show');
+  }
+
+  /* ── Create Invites ─────────────────────── */
+  async function createInvites() {
+    if (!csvRows.length) return;
+    if (!scriptUrl || !adminKey) { alert('Please configure your connection first.'); return; }
+
+    const onboardUrl = baseUrl || $('#cfg-base').value.trim();
+    if (!onboardUrl) { alert('Please set the Onboarding Page URL in Settings.'); return; }
+
+    const btn = $('#btn-create');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spin"></span> Creating...';
+
+    const BATCH = 25;
+    const allResults = [];
+    const total = csvRows.length;
+
+    $('#progress').classList.add('show');
+    $('#preview').classList.remove('show');
+
+    for (let i = 0; i < total; i += BATCH) {
+      const batch = csvRows.slice(i, i + BATCH);
+      const pct = Math.round(((i + batch.length) / total) * 100);
+
+      $('#progress-fill').style.width = pct + '%';
+      $('#progress-text').textContent = `Processing ${i + 1}\u2013${i + batch.length} of ${total}...`;
+
+      try {
+        const res = await apiPost({
+          action: 'create_invites',
+          invites: batch,
+          base_url: onboardUrl
+        });
+
+        if (res.status === 'success' && res.data?.results) {
+          allResults.push(...res.data.results);
+        } else {
+          batch.forEach(b => allResults.push({ email: b.email, status: 'error', reason: res.message || 'Unknown error' }));
+        }
+      } catch (e) {
+        batch.forEach(b => allResults.push({ email: b.email, status: 'error', reason: e.message }));
+      }
+    }
+
+    $('#progress-fill').style.width = '100%';
+    $('#progress-text').textContent = 'Done!';
+    setTimeout(() => $('#progress').classList.remove('show'), 1500);
+
+    showResults(allResults);
+    btn.disabled = false;
+    btn.textContent = 'Create Invite Links';
+    loadDashboard();
+  }
+
+  function showResults(results) {
+    lastResults = results;
+    const created = results.filter(r => r.status === 'created').length;
+    const existing = results.filter(r => r.status === 'existing').length;
+    const skipped = results.filter(r => !['created', 'existing'].includes(r.status)).length;
+
+    const sumEl = $('#result-summary');
+    const cls = skipped > 0 ? 'result-warn' : 'result-ok';
+    const parts = [];
+    if (created) parts.push(`${created} new`);
+    if (existing) parts.push(`${existing} reused`);
+    const readyCount = created + existing;
+    sumEl.innerHTML = `<div class="${cls}">${readyCount} invite(s) ready${parts.length ? ` (${parts.join(', ')})` : ''}${skipped ? `, ${skipped} skipped/errored` : ''}</div>`;
+
+    const links = results.filter(r => r.link).map(r => r.link);
+    let actHtml = '';
+    if (links.length) {
+      actHtml += `<button type="button" class="btn btn-g btn-sm" onclick="downloadLinks()">Download Links CSV</button>`;
+      actHtml += `<button type="button" class="btn btn-g btn-sm" onclick="sendEmails()">Send Emails</button>`;
+    }
+    $('#result-actions').innerHTML = actHtml;
+
+    let html = '';
+    const BADGE_CLS = new Map([['created','created'],['existing','existing'],['skipped','skipped'],['error','expired']]);
+    results.forEach(r => {
+      const cls = BADGE_CLS.get(r.status) || 'pending';
+      const badge = `<span class="badge badge-${cls}">${esc(r.status)}</span>`;
+      html += `<tr>
+        <td>${esc(r.email)}</td>
+        <td>${esc(r.business_name) || '—'}</td>
+        <td>${badge}</td>
+        <td>${r.link ? `<button type="button" class="copy-btn" data-link="${escAttr(r.link)}" onclick="copyLink(this)">Copy</button>` : esc(r.reason || '—')}</td>
+      </tr>`;
+    });
+    $('#result-body').innerHTML = html;
+    $('#results').classList.add('show');
+  }
+
+  /* ── Send Emails ────────────────────────── */
+  async function sendEmails() {
+    if (!confirm('Send invite emails to all pending invites from this batch?')) return;
+
+    try {
+      const listRes = await apiPost({ action: 'list_invites' });
+      if (listRes.status !== 'success') throw new Error('Could not fetch invites');
+
+      const pending = (listRes.data.invites || []).filter(i => i.status === 'pending');
+      if (!pending.length) { alert('No pending invites to email.'); return; }
+
+      const allowedTokens = new Set(
+        lastResults
+          .filter(r => r.status === 'created' || r.status === 'existing')
+          .map(r => r.token)
+          .filter(Boolean)
+      );
+      const toSend = pending.filter(i => allowedTokens.has(i.token));
+
+      if (!toSend.length) { alert('No matching pending invites found.'); return; }
+
+      const tokens = toSend.map(i => i.token).filter(Boolean);
+
+      const res = await apiPost({ action: 'send_emails', tokens });
+      if (res.status === 'success') {
+        let msg = `Sent: ${res.data.sent}`;
+        if (res.data.failed) msg += `, Failed: ${res.data.failed}`;
+        if (res.data.error) msg += `\n${res.data.error}`;
+        alert(msg);
+        loadDashboard();
+      } else {
+        alert('Error: ' + (res.message || 'Unknown'));
+      }
+    } catch (e) {
+      alert('Email sending failed: ' + e.message);
+    }
+  }
+
+  /* ── Download Links CSV ─────────────────── */
+  function downloadLinks() {
+    let csv = 'Email,BusinessName,InviteLink,Status\r\n';
+    lastResults.forEach(r => {
+      csv += csvSafe(r.email) + ',' + csvSafe(r.business_name) + ',' + csvSafe(r.link || '') + ',' + csvSafe(r.status) + '\r\n';
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'invite-links-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  /* ── Download VSDH Import CSVs ───────────── */
+  function downloadCsvText(csvText, filename) {
+    const blob = new Blob(['\uFEFF' + (csvText || '')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function setExportStatus(msg, show = true) {
+    const el = $('#export-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.display = show ? 'block' : 'none';
+  }
+
+  async function refreshImportCounts() {
+    if (!scriptUrl || !adminKey) { alert('Please configure your connection first.'); return; }
+    setExportStatus('Loading onboarding counts…', true);
+    try {
+      const res = await apiPost({ action: 'export_onboarding_csvs' });
+      if (res.status !== 'success') throw new Error(res.message || 'Export failed');
+      const c = (res.data && res.data.counts) ? res.data.counts : null;
+      if (!c) { setExportStatus('No onboarding records found.', true); return; }
+      setExportStatus(`Organizations: ${c.organizations} • Businesses: ${c.businesses} • Locations: ${c.locations}`, true);
+    } catch (e) {
+      setExportStatus('Failed to load onboarding counts: ' + e.message, true);
+    }
+  }
+
+  async function downloadImportCsvs() {
+    if (!scriptUrl || !adminKey) { alert('Please configure your connection first.'); return; }
+
+    const btn = $('#btn-export');
+    const prev = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing downloads…'; }
+    setExportStatus('Preparing CSVs…', true);
+
+    try {
+      const res = await apiPost({ action: 'export_onboarding_csvs' });
+      if (res.status !== 'success') throw new Error(res.message || 'Export failed');
+
+      const data = res.data || {};
+      if (!data.organization && !data.business && !data.location) {
+        setExportStatus('No onboarding records found.', true);
+        return;
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      // Stagger downloads — some browsers block rapid successive automatic downloads
+      downloadCsvText(data.organization || 'name\r\n', `Organization-${today}.csv`);
+      await new Promise(r => setTimeout(r, 300));
+      downloadCsvText(data.business || '', `Business-${today}.csv`);
+      await new Promise(r => setTimeout(r, 300));
+      downloadCsvText(data.location || '', `BusinessLocation-${today}.csv`);
+
+      const c = data.counts || null;
+      if (c) setExportStatus(`Downloaded • Organizations: ${c.organizations} • Businesses: ${c.businesses} • Locations: ${c.locations}`, true);
+      else setExportStatus('Downloaded CSVs.', true);
+    } catch (e) {
+      setExportStatus('Export failed: ' + e.message, true);
+      alert('Export failed: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = prev || 'Download Import CSVs'; }
+    }
+  }
+
+  /* ── Copy Link ──────────────────────────── */
+  function copyLink(btn) {
+    const link = btn.getAttribute('data-link') || '';
+    navigator.clipboard.writeText(link).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  /* ── Utilities ──────────────────────────── */
+  function esc(s) { const t = document.createElement('span'); t.textContent = s || ''; return t.innerHTML; }
+  function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function csvSafe(s) {
+    s = (s || '').replace(/"/g, '""');
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return '"' + s + '"';
+  }
+  </script>
+</body>
+</html>
