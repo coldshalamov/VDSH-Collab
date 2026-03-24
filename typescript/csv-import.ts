@@ -62,7 +62,9 @@ function normalizeState(state: string): string {
 
 function normalizeCountry(country: string | undefined): string {
   const c = String(country || '').trim();
-  return c ? c : 'USA';
+  if (!c) return 'USA';
+  // Template constraint (Config Import.xlsx): Country must be USA
+  return c.toUpperCase() === 'USA' ? 'USA' : c;
 }
 
 function normalizeFeeMode(mode: unknown): string | undefined {
@@ -171,6 +173,9 @@ function validateBusinessRecord(record: Partial<BusinessRecord>): string | null 
   );
   if (feeCommError) return feeCommError;
 
+  const country = String(record.country ?? '').trim();
+  if (country && country.toUpperCase() !== 'USA') return `Invalid country: ${country}`;
+
   return null;
 }
 
@@ -196,6 +201,12 @@ function validateLocationRecord(record: Partial<BusinessLocationRecord>): string
     const normalized = normalizeServiceableStates(record.serviceable_states);
     if (!normalized) return `Invalid ServiceableStates: ${record.serviceable_states}`;
   }
+
+  const op = String(record.operation_type ?? '').trim();
+  if (op && op !== 'Virtual') return `Invalid OperationType: ${op}`;
+
+  const country = String(record.country ?? '').trim();
+  if (country && country.toUpperCase() !== 'USA') return `Invalid country: ${country}`;
 
   return null;
 }

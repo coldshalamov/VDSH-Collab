@@ -753,7 +753,7 @@
       if (res.status !== 'success') throw new Error(res.message || 'Export failed');
       const c = (res.data && res.data.counts) ? res.data.counts : null;
       if (!c) { setExportStatus('No onboarding records found.', true); return; }
-      setExportStatus(`Organizations: ${c.organizations} • Businesses: ${c.businesses} • Locations: ${c.locations}`, true);
+      setExportStatus(`Organization: ${c.organizations} • Business: ${c.businesses} • BusinessLocation: ${c.locations}`, true);
     } catch (e) {
       setExportStatus('Failed to load onboarding counts: ' + e.message, true);
     }
@@ -786,7 +786,7 @@
       downloadCsvText(data.location || '', `BusinessLocation-${today}.csv`);
 
       const c = data.counts || null;
-      if (c) setExportStatus(`Downloaded • Organizations: ${c.organizations} • Businesses: ${c.businesses} • Locations: ${c.locations}`, true);
+      if (c) setExportStatus(`Downloaded • Organization: ${c.organizations} • Business: ${c.businesses} • BusinessLocation: ${c.locations}`, true);
       else setExportStatus('Downloaded CSVs.', true);
     } catch (e) {
       setExportStatus('Export failed: ' + e.message, true);

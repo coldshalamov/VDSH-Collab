@@ -231,6 +231,9 @@ function validateOnboardingFields(fields) {
   var bizZip = String(biz.zipcode || '').trim();
   if (!/^\d{5}(-\d{4})?$/.test(bizZip)) return 'Valid business ZIP code required';
 
+  var bizCountry = String(biz.country || '').trim();
+  if (bizCountry && bizCountry.toUpperCase() !== 'USA') return 'Country must be USA';
+
   var feeClientErr = validateFeePair(biz.platform_fee_client_mode, biz.platform_fee_client_amount, 'Platform fee (paid by client)');
   if (feeClientErr) return feeClientErr;
 
@@ -256,6 +259,9 @@ function validateOnboardingFields(fields) {
   var locZip = String(loc.zipcode || '').trim();
   if (!/^\d{5}(-\d{4})?$/.test(locZip)) return 'Valid location ZIP code required';
 
+  var locCountry = String(loc.country || '').trim();
+  if (locCountry && locCountry.toUpperCase() !== 'USA') return 'Country must be USA';
+
   var svc = String(loc.serviceable_states || '').trim();
   if (svc) {
     var normalizedSvc = normalizeServiceableStates(svc);
@@ -263,8 +269,8 @@ function validateOnboardingFields(fields) {
   }
 
   var op = String(loc.operation_type || '').trim();
-  if (op && op !== 'Virtual' && op !== 'Physical' && op !== 'Hybrid') {
-    return 'OperationType must be Virtual, Physical, or Hybrid';
+  if (op && op !== 'Virtual') {
+    return 'OperationType must be Virtual';
   }
 
   // Boolean parsing for DoNotDisplayOnHeader if present
@@ -508,8 +514,9 @@ function submitOnboarding(data) {
     var doNotDisplay = parseTrueFalse(biz.do_not_display_on_header);
     var doNotDisplayStr = doNotDisplay === true ? 'True' : 'False';
 
-    var bizCountry = normalizeCountry(biz.country);
-    var locCountry = normalizeCountry(loc.country);
+    // Template constraint (Config Import.xlsx): Country must be USA
+    var bizCountry = 'USA';
+    var locCountry = 'USA';
 
     var bizState = normalizeStateCode(biz.state);
     var locState = normalizeStateCode(loc.state);
@@ -524,12 +531,12 @@ function submitOnboarding(data) {
 
     // Write to 3 sheets (token ties them together)
     // Idempotent under retries/crashes: if a row for this token already exists, do not append a duplicate.
-    var orgSheet = getOrCreateSheet('Organizations', ORG_HEADERS);
+    var orgSheet = getOrCreateSheet('Organization', ORG_HEADERS);
     if (!sheetHasTokenRow_(orgSheet, token)) {
       orgSheet.appendRow([nowIso, token, sanitize(orgName)]);
     }
 
-    var bizSheet = getOrCreateSheet('Businesses', BIZ_HEADERS);
+    var bizSheet = getOrCreateSheet('Business', BIZ_HEADERS);
     if (!sheetHasTokenRow_(bizSheet, token)) {
       bizSheet.appendRow([
         nowIso, token,
@@ -544,7 +551,7 @@ function submitOnboarding(data) {
       ]);
     }
 
-    var locSheet = getOrCreateSheet('BusinessLocations', LOC_HEADERS);
+    var locSheet = getOrCreateSheet('BusinessLocation', LOC_HEADERS);
     if (!sheetHasTokenRow_(locSheet, token)) {
       locSheet.appendRow([
         nowIso, token,
@@ -650,9 +657,9 @@ function buildCsv(headers, rows) {
 }
 
 function exportOnboardingCsvs() {
-  var orgSheet = getOrCreateSheet('Organizations', ORG_HEADERS);
-  var bizSheet = getOrCreateSheet('Businesses', BIZ_HEADERS);
-  var locSheet = getOrCreateSheet('BusinessLocations', LOC_HEADERS);
+  var orgSheet = getOrCreateSheet('Organization', ORG_HEADERS);
+  var bizSheet = getOrCreateSheet('Business', BIZ_HEADERS);
+  var locSheet = getOrCreateSheet('BusinessLocation', LOC_HEADERS);
 
   var orgRows = orgSheet.getDataRange().getValues();
   var bizRows = bizSheet.getDataRange().getValues();
@@ -765,7 +772,21 @@ function getOrCreateSheet(name, headers) {
   if (!ss) throw new Error('No active spreadsheet (expected container-bound Apps Script)');
 
   var sheet = ss.getSheetByName(name);
-  if (!sheet) sheet = ss.insertSheet(name);
+  if (!sheet) {
+    // Legacy tab-name migration: earlier versions used pluralized tab names.
+    // If the legacy tab exists, rename it in place so exports keep working.
+    var legacy = null;
+    if (name === 'Organization') legacy = ss.getSheetByName('Organizations');
+    else if (name === 'Business') legacy = ss.getSheetByName('Businesses');
+    else if (name === 'BusinessLocation') legacy = ss.getSheetByName('BusinessLocations');
+
+    if (legacy) {
+      legacy.setName(name);
+      sheet = legacy;
+    } else {
+      sheet = ss.insertSheet(name);
+    }
+  }
 
   // If the sheet exists but has no rows yet, add header row.
   if (headers && headers.length && sheet.getLastRow() === 0) {

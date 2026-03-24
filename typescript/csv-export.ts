@@ -43,7 +43,7 @@ export const BUSINESS_COLUMNS: readonly ExportColumn<BusinessRecord>[] = [
   { header: 'City', get: r => r.city },
   { header: 'State', get: r => r.state },
   { header: 'Zipcode', get: r => r.zipcode },
-  { header: 'Country', get: r => r.country },
+  { header: 'Country', get: r => r.country || 'USA' },
   { header: 'Platform service fee (paid by client) - Mode', get: r => r.platform_fee_client_mode },
   { header: 'Platform service fee (paid by client) - Amount', get: r => r.platform_fee_client_amount },
   { header: 'Platform service fee (Charged from business commission) - Mode', get: r => r.platform_fee_commission_mode },
@@ -54,14 +54,14 @@ export const LOCATION_COLUMNS: readonly ExportColumn<BusinessLocationRecord>[] =
   { header: 'BusinessName', get: r => r.business_name },
   { header: 'Name', get: r => r.name },
   { header: 'Phone', get: r => r.phone },
-  { header: 'OperationType', get: r => r.operation_type },
+  { header: 'OperationType', get: r => r.operation_type || 'Virtual' },
   { header: 'ServiceableStates', get: r => r.serviceable_states },
   { header: 'AddressLine1', get: r => r.address_line1 },
   { header: 'AddressLine2', get: r => r.address_line2 },
   { header: 'City', get: r => r.city },
   { header: 'State', get: r => r.state },
   { header: 'Zipcode', get: r => r.zipcode },
-  { header: 'Country', get: r => r.country },
+  { header: 'Country', get: r => r.country || 'USA' },
 ] as const;
 
 function escapeCsvField(value: string): string {
