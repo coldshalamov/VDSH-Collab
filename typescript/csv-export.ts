@@ -68,7 +68,9 @@ function escapeCsvField(value: string): string {
   if (!value) return '';
   // Prevent CSV formula injection (=, +, -, @, tab, CR can trigger formulas in Excel)
   if (/^[=+\-@\t\r]/.test(value)) {
-    value = "'" + value;
+    // E.164 phone numbers legitimately start with "+", and we do not want to mutate them.
+    const isE164Phone = /^\+\d{8,15}$/.test(value);
+    if (!isE164Phone) value = "'" + value;
   }
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return '"' + value.replace(/"/g, '""') + '"';

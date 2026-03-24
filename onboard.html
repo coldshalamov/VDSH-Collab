@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
   <title>Business Onboarding — VS Digital Health</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -733,7 +734,23 @@
   /* ═══════════════════════════════════════════
      CONFIGURATION — Set before deploying
      ═══════════════════════════════════════════ */
-  const SCRIPT_URL = ''; // Paste your Google Apps Script /exec URL here
+  // API endpoint (Apps Script Web App /exec URL).
+  // Resolution order:
+  //   1) `?s=<SCRIPT_URL>` (recommended; added automatically by admin.html when generating invites)
+  //   2) localStorage `vsdh_script_url` (set when `s` is present)
+  //   3) hardcoded fallback (leave empty for safety)
+  const SCRIPT_URL = (() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const fromParam = String(params.get('s') || params.get('script_url') || '').trim();
+      const fromStorage = String(localStorage.getItem('vsdh_script_url') || '').trim();
+      const resolved = (fromParam || fromStorage).trim();
+      if (resolved) localStorage.setItem('vsdh_script_url', resolved);
+      return resolved;
+    } catch (e) {
+      return '';
+    }
+  })();
 
   /* ── US States ──────────────────────────── */
   const STATES = [
@@ -836,16 +853,23 @@
     if (!SCRIPT_URL) { show('config'); return; }
 
     const params = new URLSearchParams(location.search);
-    token = params.get('token') || '';
+    const tokenFromUrl = params.get('token') || '';
+    token = tokenFromUrl || sessionStorage.getItem('vsdh_invite_token') || '';
+    if (tokenFromUrl) sessionStorage.setItem('vsdh_invite_token', tokenFromUrl);
 
     // Strip token from URL to prevent leaking via referrer/history
-    if (token && history.replaceState) {
+    if (tokenFromUrl && history.replaceState) {
       const clean = location.pathname + location.hash;
       history.replaceState(null, '', clean);
     }
 
     if (!token) {
       show('invalid', '\u{1F517}', 'No Invite Token', 'Please use the link from your invitation email.');
+      return;
+    }
+
+    if (!SCRIPT_URL || !/^https?:\/\//.test(SCRIPT_URL)) {
+      show('invalid', '\u26A0\uFE0F', 'Configuration Error', 'This onboarding page is missing its server URL. Please request a new invite link from the operator.');
       return;
     }
 
@@ -1245,6 +1269,7 @@
       const res = await api({ action: 'submit_onboarding', token, fields });
 
       if (res.status === 'success' && res.data?.submitted) {
+        sessionStorage.removeItem('vsdh_invite_token');
         show('success');
       } else {
         throw new Error(res.data?.reason || res.message || 'Submission failed');

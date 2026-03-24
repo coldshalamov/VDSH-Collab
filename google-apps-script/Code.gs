@@ -262,6 +262,11 @@ function validateOnboardingFields(fields) {
     if (!normalizedSvc) return 'ServiceableStates must be in {AZ,CA,GA} format';
   }
 
+  var op = String(loc.operation_type || '').trim();
+  if (op && op !== 'Virtual' && op !== 'Physical' && op !== 'Hybrid') {
+    return 'OperationType must be Virtual, Physical, or Hybrid';
+  }
+
   // Boolean parsing for DoNotDisplayOnHeader if present
   if (biz.do_not_display_on_header !== undefined) {
     var b = parseTrueFalse(biz.do_not_display_on_header);
@@ -275,7 +280,10 @@ function validateOnboardingFields(fields) {
 
 function createInvites(data) {
   var sheet = getOrCreateSheet('Invites', INVITE_HEADERS);
-  var baseUrl = data.base_url || '';
+  var baseUrl = String(data.base_url || '').trim();
+  if (!baseUrl) throw new Error('base_url is required (onboard.html URL)');
+  if (!/^https?:\/\//.test(baseUrl)) throw new Error('base_url must start with http:// or https://');
+  if (/[?&]token=/.test(baseUrl)) throw new Error('base_url must not already include a token= query param');
   var invites = data.invites || [];
   var results = [];
   var rows = sheet.getDataRange().getValues();
@@ -312,7 +320,8 @@ function createInvites(data) {
     var token = Utilities.getUuid();
     var now = new Date();
     var expires = new Date(now.getTime() + INVITE_EXPIRY_DAYS * 86400000);
-    var link = baseUrl + '?token=' + token;
+    var joiner = baseUrl.indexOf('?') === -1 ? '?' : '&';
+    var link = baseUrl + joiner + 'token=' + encodeURIComponent(token);
     var row = [
       token, sanitize(email), sanitize(biz), 'pending',
       now.toISOString(), expires.toISOString(), '', link
@@ -354,11 +363,30 @@ function sendInviteEmails(data) {
         continue;
       }
 
+      var matched = false;
       for (var r = 1; r < rows.length; r++) {
-        if (rows[r][0] === tokens[i] && rows[r][3] === 'pending') {
+        if (rows[r][0] === tokens[i]) {
+          matched = true;
+
+          var status = String(rows[r][3] || '');
+          var expires = new Date(rows[r][5]);
+
+          if (status !== 'pending') {
+            failedDetails.push({ token: tokens[i], error: 'Invite is not pending (status=' + status + ')' });
+            failed++;
+            break;
+          }
+
+          if (!isNaN(expires.getTime()) && expires < new Date()) {
+            failedDetails.push({ token: tokens[i], error: 'Invite is expired' });
+            failed++;
+            break;
+          }
+
           try {
             sendOneInviteEmail(rows[r][1], rows[r][2], rows[r][7]);
             sheet.getRange(r + 1, 4).setValue('emailed');
+            rows[r][3] = 'emailed';
             sent++;
           } catch (ex) {
             failedDetails.push({ token: tokens[i], error: ex.message });
@@ -366,6 +394,11 @@ function sendInviteEmails(data) {
           }
           break;
         }
+      }
+
+      if (!matched) {
+        failedDetails.push({ token: tokens[i], error: 'Token not found' });
+        failed++;
       }
     }
   } finally {
@@ -402,7 +435,7 @@ function sendOneInviteEmail(to, businessName, link) {
 
   MailApp.sendEmail({
     to: to,
-    subject: "You're Invited — Complete Your Business Onboarding",
+    subject: "You're Invited - Complete Your Business Onboarding",
     body: plainText,
     htmlBody: html
   });
@@ -478,6 +511,9 @@ function submitOnboarding(data) {
     var bizCountry = normalizeCountry(biz.country);
     var locCountry = normalizeCountry(loc.country);
 
+    var bizState = normalizeStateCode(biz.state);
+    var locState = normalizeStateCode(loc.state);
+
     var feeClientMode = normalizeFeeMode(biz.platform_fee_client_mode);
     var feeClientAmount = normalizeFeeAmount(biz.platform_fee_client_amount);
     var feeCommMode = normalizeFeeMode(biz.platform_fee_commission_mode);
@@ -487,32 +523,39 @@ function submitOnboarding(data) {
     var locServiceableStates = normalizeServiceableStates(loc.serviceable_states);
 
     // Write to 3 sheets (token ties them together)
+    // Idempotent under retries/crashes: if a row for this token already exists, do not append a duplicate.
     var orgSheet = getOrCreateSheet('Organizations', ORG_HEADERS);
-    orgSheet.appendRow([nowIso, token, sanitize(orgName)]);
+    if (!sheetHasTokenRow_(orgSheet, token)) {
+      orgSheet.appendRow([nowIso, token, sanitize(orgName)]);
+    }
 
     var bizSheet = getOrCreateSheet('Businesses', BIZ_HEADERS);
-    bizSheet.appendRow([
-      nowIso, token,
-      sanitize(orgName), sanitize(bizName),
-      sanitize(biz.description || ''), sanitize(bizPhone),
-      sanitize(biz.tagline || ''), sanitize(doNotDisplayStr),
-      sanitize(biz.address_line1 || ''), sanitize(biz.address_line2 || ''),
-      sanitize(biz.city || ''), sanitize(biz.state || ''), sanitize(biz.zipcode || ''),
-      sanitize(bizCountry),
-      sanitize(feeClientMode || ''), sanitize(feeClientAmount || ''),
-      sanitize(feeCommMode || ''), sanitize(feeCommAmount || '')
-    ]);
+    if (!sheetHasTokenRow_(bizSheet, token)) {
+      bizSheet.appendRow([
+        nowIso, token,
+        sanitize(orgName), sanitize(bizName),
+        sanitize(biz.description || ''), sanitize(bizPhone),
+        sanitize(biz.tagline || ''), sanitize(doNotDisplayStr),
+        sanitize(biz.address_line1 || ''), sanitize(biz.address_line2 || ''),
+        sanitize(biz.city || ''), sanitize(bizState || ''), sanitize(biz.zipcode || ''),
+        sanitize(bizCountry),
+        sanitize(feeClientMode || ''), sanitize(feeClientAmount || ''),
+        sanitize(feeCommMode || ''), sanitize(feeCommAmount || '')
+      ]);
+    }
 
     var locSheet = getOrCreateSheet('BusinessLocations', LOC_HEADERS);
-    locSheet.appendRow([
-      nowIso, token,
-      sanitize(bizName), sanitize(loc.name || ''),
-      sanitize(locPhone), sanitize(locOperationType),
-      sanitize(locServiceableStates || ''),
-      sanitize(loc.address_line1 || ''), sanitize(loc.address_line2 || ''),
-      sanitize(loc.city || ''), sanitize(loc.state || ''), sanitize(loc.zipcode || ''),
-      sanitize(locCountry)
-    ]);
+    if (!sheetHasTokenRow_(locSheet, token)) {
+      locSheet.appendRow([
+        nowIso, token,
+        sanitize(bizName), sanitize(loc.name || ''),
+        sanitize(locPhone), sanitize(locOperationType),
+        sanitize(locServiceableStates || ''),
+        sanitize(loc.address_line1 || ''), sanitize(loc.address_line2 || ''),
+        sanitize(loc.city || ''), sanitize(locState || ''), sanitize(loc.zipcode || ''),
+        sanitize(locCountry)
+      ]);
+    }
 
     // Mark invite as completed
     var inviteSheet = getOrCreateSheet('Invites', INVITE_HEADERS);
@@ -582,7 +625,11 @@ function escapeCsvField(value) {
   var s = String(value || '');
   if (!s) return '';
   // Prevent CSV/Sheets formula injection (=, +, -, @, tab, CR can trigger formulas)
-  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  if (/^[=+\-@\t\r]/.test(s)) {
+    // E.164 phone numbers legitimately start with "+", and we do not want to mutate them.
+    var isE164Phone = /^\+\d{8,15}$/.test(s);
+    if (!isE164Phone) s = "'" + s;
+  }
   if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
@@ -702,8 +749,8 @@ function exportOnboardingCsvs() {
   return {
     counts: {
       organizations: orgExportRows.length,
-      businesses: Math.max(0, bizRows.length - 1),
-      locations: Math.max(0, locRows.length - 1)
+      businesses: bizExportRows.length,
+      locations: locExportRows.length
     },
     organization: buildCsv(['name'], orgExportRows),
     business: buildCsv(bizExportHeaders, bizExportRows),
@@ -714,19 +761,31 @@ function exportOnboardingCsvs() {
 // ── Helpers ─────────────────────────────────────────────
 
 function getOrCreateSheet(name, headers) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(5000);
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(name);
-    if (!sheet) {
-      sheet = ss.insertSheet(name);
-      if (headers && headers.length) sheet.appendRow(headers);
-    }
-    return sheet;
-  } finally {
-    lock.releaseLock();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('No active spreadsheet (expected container-bound Apps Script)');
+
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) sheet = ss.insertSheet(name);
+
+  // If the sheet exists but has no rows yet, add header row.
+  if (headers && headers.length && sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
   }
+
+  return sheet;
+}
+
+function sheetHasTokenRow_(sheet, token) {
+  var wanted = String(token || '');
+  if (!wanted) return false;
+
+  // For all onboarding sheets in this project, "Token" is column 2 (0-based index 1).
+  var tokenColIndex = 1;
+  var rows = sheet.getDataRange().getValues();
+  for (var r = 1; r < rows.length; r++) {
+    if (String(rows[r][tokenColIndex] || '') === wanted) return true;
+  }
+  return false;
 }
 
 function ok(data) {

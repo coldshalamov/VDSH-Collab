@@ -318,7 +318,7 @@
   /* ═══════════════════════════════════════════
      STATE
      ═══════════════════════════════════════════ */
-  let scriptUrl = sessionStorage.getItem('vsdh_url') || '';
+  let scriptUrl = sessionStorage.getItem('vsdh_url') || localStorage.getItem('vsdh_script_url') || '';
   let adminKey  = sessionStorage.getItem('vsdh_key') || '';
   let baseUrl   = localStorage.getItem('vsdh_base_url') || '';
   let csvRows   = [];
@@ -352,6 +352,7 @@
 
     sessionStorage.setItem('vsdh_url', scriptUrl);
     sessionStorage.setItem('vsdh_key', adminKey);
+    localStorage.setItem('vsdh_script_url', scriptUrl);
     if (baseUrl) localStorage.setItem('vsdh_base_url', baseUrl);
     $('#cfg-saved').classList.add('show');
     setTimeout(() => $('#cfg-saved').classList.remove('show'), 3000);
@@ -565,12 +566,30 @@
     $('#progress').classList.remove('show');
   }
 
+  function buildOnboardingBaseUrl(rawOnboardUrl) {
+    // Invite links must be absolute http(s) URLs (for emails) and need to carry the Apps Script URL
+    // so onboard.html can call the backend without hardcoding SCRIPT_URL.
+    try {
+      const u = new URL(String(rawOnboardUrl || '').trim(), window.location.href);
+
+      // Never allow an operator to accidentally bake a token into the base URL.
+      u.searchParams.delete('token');
+
+      // Provide backend URL to onboard.html via ?s=... (not sensitive).
+      if (scriptUrl) u.searchParams.set('s', scriptUrl);
+
+      return u.toString();
+    } catch (e) {
+      return String(rawOnboardUrl || '').trim();
+    }
+  }
+
   /* ── Create Invites ─────────────────────── */
   async function createInvites() {
     if (!csvRows.length) return;
     if (!scriptUrl || !adminKey) { alert('Please configure your connection first.'); return; }
 
-    const onboardUrl = baseUrl || $('#cfg-base').value.trim();
+    const onboardUrl = buildOnboardingBaseUrl(baseUrl || $('#cfg-base').value.trim());
     if (!onboardUrl) { alert('Please set the Onboarding Page URL in Settings.'); return; }
 
     const btn = $('#btn-create');
@@ -658,7 +677,7 @@
 
   /* ── Send Emails ────────────────────────── */
   async function sendEmails() {
-    if (!confirm('Send invite emails to all pending invites from this batch?')) return;
+    if (!confirm('Send invite emails to all pending invites from this batch?\n\nNote: Google MailApp daily quotas apply (free Gmail is low; Workspace is higher).')) return;
 
     try {
       const listRes = await apiPost({ action: 'list_invites' });
