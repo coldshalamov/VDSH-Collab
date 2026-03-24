@@ -738,12 +738,13 @@
   //   1) `?s=<SCRIPT_URL>` (recommended; added automatically by admin.html when generating invites)
   //   2) localStorage `vsdh_script_url` (set when `s` is present)
   //   3) hardcoded fallback (leave empty for safety)
+  const HARDCODED_SCRIPT_URL = '';
   const SCRIPT_URL = (() => {
     try {
       const params = new URLSearchParams(location.search || '');
       const fromParam = String(params.get('s') || params.get('script_url') || '').trim();
       const fromStorage = String(localStorage.getItem('vsdh_script_url') || '').trim();
-      const resolved = (fromParam || fromStorage).trim();
+      const resolved = (fromParam || fromStorage || HARDCODED_SCRIPT_URL).trim();
       if (resolved) localStorage.setItem('vsdh_script_url', resolved);
       return resolved;
     } catch (e) {
@@ -1215,6 +1216,10 @@
         ${d.business.tagline ? rr('Tagline', d.business.tagline) : ''}
         ${d.business.description ? rr('Description', d.business.description) : ''}
         ${rr('Do not display on header', d.business.do_not_display_on_header ? 'True' : 'False')}
+      </div>
+
+      <div class="rev-sec">
+        <div class="rev-head"><h3>Address &amp; Fees</h3><button type="button" class="rev-edit" onclick="goToStep(1)">Edit</button></div>
         <div class="rev-row"><span class="rev-lbl">Address</span><span class="rev-val">${formatAddr(d.business)}</span></div>
         ${rr('Client fee', fee(d.business.platform_fee_client_mode, d.business.platform_fee_client_amount))}
         ${rr('Commission fee', fee(d.business.platform_fee_commission_mode, d.business.platform_fee_commission_amount))}
